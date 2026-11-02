@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LexiVoice — AI Vocabulary Voice Coach</title>
+  <meta name="description" content="A simple, interactive voice agent prototype that helps people learn and master sophisticated English vocabulary through voice dialogue, active recall quizzes, and pronunciation evaluation." />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Font: Inter / Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Feedback Banner (Toasts) -->
+  <div id="action-feedback-banner" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full border text-sm font-medium shadow-2xl backdrop-blur-md transition-all duration-300"></div>
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+          </svg>
+        </div>
+        <div>
+          <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent">LexiVoice</span>
+          <span class="hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Voice Agent Prototype</span>
+        </div>
+      </div>
+
+      <!-- User Progress Badges -->
+      <div class="flex items-center gap-3 sm:gap-6">
+        <div class="flex items-center gap-4 text-xs font-medium">
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60">
+            <span class="text-amber-400">🔥</span>
+            <span class="text-slate-400">Streak:</span>
+            <span id="stat-streak-count" class="font-bold text-slate-100">0🔥</span>
+          </div>
+
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60">
+            <span class="text-indigo-400">💎</span>
+            <span class="text-slate-400">Mastered:</span>
+            <span id="stat-mastered-count" class="font-bold text-slate-100">0</span>
+          </div>
+
+          <div class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60">
+            <span class="text-emerald-400">⚡</span>
+            <span class="text-slate-400">XP:</span>
+            <span id="stat-xp-count" class="font-bold text-slate-100">0</span>
+          </div>
+        </div>
+
+        <!-- Settings Button -->
+        <button id="open-settings-btn" title="Voice & Engine Settings" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mode Selector Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center gap-2 overflow-x-auto border-t border-slate-800/40">
+      <button data-mode="learn" class="mode-tab px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition flex items-center gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 whitespace-nowrap">
+        <span>📖</span> Word Explorer
+      </button>
+      <button data-mode="quiz" class="mode-tab px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition flex items-center gap-2 bg-slate-800/80 text-slate-300 hover:text-white whitespace-nowrap">
+        <span>⚡</span> Voice Quiz
+      </button>
+      <button data-mode="conversation" class="mode-tab px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition flex items-center gap-2 bg-slate-800/80 text-slate-300 hover:text-white whitespace-nowrap">
+        <span>🎭</span> Roleplay Conversation
+      </button>
+      <button data-mode="pronounce" class="mode-tab px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition flex items-center gap-2 bg-slate-800/80 text-slate-300 hover:text-white whitespace-nowrap">
+        <span>🗣️</span> Pronunciation Lab
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- LEFT COLUMN: Voice Agent Arena & Live Dialogue (7 cols) -->
+    <section class="lg:col-span-7 flex flex-col gap-6">
+
+      <!-- Voice Interaction Visualizer Card -->
+      <div class="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col items-center relative overflow-hidden shadow-2xl">
+        
+        <!-- Background Ambient Glow -->
+        <div class="absolute -top-24 -left-24 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Status Indicator Pill -->
+        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/70 text-xs font-medium text-slate-300 mb-4 z-10">
+          <div id="agent-status-dot" class="w-2.5 h-2.5 rounded-full bg-indigo-400"></div>
+          <span id="agent-status-text">Lexi is ready</span>
+        </div>
+
+        <!-- Canvas Voice Orb -->
+        <div class="orb-wrapper w-56 h-56 sm:w-64 sm:h-64 my-2 cursor-pointer z-10" title="Click to start/stop speaking">
+          <canvas id="voice-orb-canvas" class="w-full h-full"></canvas>
+        </div>
+
+        <!-- Live Real-Time Speech Recognition Preview -->
+        <div id="live-transcript-preview" class="hidden text-sm italic text-emerald-400 font-medium my-2 text-center max-w-md animate-pulse z-10">
+          🎙️ Listening...
+        </div>
+
+        <!-- Primary Voice Controls -->
+        <div class="w-full flex flex-col sm:flex-row items-center justify-center gap-3 mt-4 z-10">
+          
+          <!-- Big Mic Button -->
+          <button id="mic-toggle-btn" class="w-full sm:w-auto px-7 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2.5 transition active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+            </svg>
+            <span id="mic-btn-text">Start Speaking</span>
+          </button>
+
+          <!-- Replay Button -->
+          <button id="replay-voice-btn" title="Replay Lexi's voice" class="w-full sm:w-auto px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-medium border border-slate-700/80 flex items-center justify-center gap-2 transition active:scale-95">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Replay Voice</span>
+          </button>
+
+          <!-- Hint Button -->
+          <button id="hint-btn" title="Get a hint" class="w-full sm:w-auto px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 text-sm font-medium border border-slate-700/80 flex items-center justify-center gap-2 transition active:scale-95">
+            <span>💡</span>
+            <span>Hint</span>
+          </button>
+
+          <!-- Next Word Button -->
+          <button id="next-word-btn" title="Next Word" class="w-full sm:w-auto px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-medium border border-slate-700/80 flex items-center justify-center gap-2 transition active:scale-95">
+            <span>⏭️</span>
+            <span>Next</span>
+          </button>
+        </div>
+
+        <div class="text-[11px] text-slate-500 mt-3 font-normal">
+          Tip: Tap the glowing orb or press <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">Space</kbd> anytime to talk.
+        </div>
+      </div>
+
+      <!-- Live Dialogue & Transcript Container -->
+      <div class="glass-panel rounded-3xl p-5 flex flex-col shadow-xl">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-800/80 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold text-slate-200">Conversation Transcript</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          </div>
+          <span class="text-xs text-slate-400">Interactive Audio Feed</span>
+        </div>
+
+        <!-- Scrollable Speech Bubbles Feed -->
+        <div id="transcript-feed" class="overflow-y-auto max-h-80 sm:max-h-96 pr-2 space-y-3">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Fallback Text Input Bar -->
+        <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center gap-2">
+          <input 
+            type="text" 
+            id="chat-text-input" 
+            placeholder="Type your sentence here if not using voice..." 
+            class="flex-1 bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+          />
+          <button id="chat-send-btn" title="Send message" class="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition active:scale-95">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: Pedagogical Word Studio & Scenario Dashboard (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-6">
+
+      <!-- Filters & Scenario Selector -->
+      <div class="glass-panel rounded-2xl p-4 flex flex-col gap-3 shadow-lg">
+        
+        <!-- Category & Word Selectors -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Vocabulary Track</label>
+            <select id="category-filter-select" class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Select Word</label>
+            <select id="word-selector-select" class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Roleplay Scenario Picker (shown in conversation mode) -->
+        <div id="scenario-picker-container" class="hidden pt-2 border-t border-slate-800">
+          <label class="block text-xs font-semibold text-indigo-300 mb-1">Active Scenario</label>
+          <select id="scenario-selector-select" class="w-full bg-slate-900 border border-indigo-500/40 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="0">Executive Strategy & Pitch (Business)</option>
+            <option value="1">Art Gallery & Film Salon (Literary)</option>
+            <option value="2">Leadership Job Interview (Professional)</option>
+            <option value="3">Tech Ethics & Future Cafe (Tech & Society)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Current Word Study Card -->
+      <div id="current-word-card" class="glass-panel rounded-3xl p-6 flex flex-col gap-4 shadow-xl border border-slate-700/60 relative overflow-hidden transition-all duration-300">
+        
+        <!-- Header: Word title, IPA, part of speech -->
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="card-category-badge" class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Academic & GRE</span>
+              <span id="card-part-of-speech" class="text-xs text-slate-400 italic">adjective</span>
+            </div>
+            <h2 id="card-word-title" class="text-2xl sm:text-3xl font-extrabold text-white mt-1.5 tracking-tight">Ephemeral</h2>
+            <div class="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
+              <span id="card-phonetic" class="font-mono text-indigo-300">/ɪˈfem.ər.əl/</span>
+              <span>•</span>
+              <span id="card-syllables" class="font-medium text-slate-300">e-phem-er-al</span>
+            </div>
+          </div>
+
+          <!-- Pronounce Word Button -->
+          <button id="card-play-audio-btn" title="Pronounce this word" class="p-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Definition Section -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-800">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Definition</div>
+          <p id="card-short-def" class="text-sm font-semibold text-slate-100">Lasting for a very brief period of time; fleeting.</p>
+          <p id="card-deep-def" class="text-xs text-slate-300 leading-relaxed">Describes experiences, beauty, or states that exist only momentarily before vanishing.</p>
+        </div>
+
+        <!-- Contextual Example -->
+        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Example in Context</div>
+          <p id="card-example" class="text-xs text-slate-200 italic leading-relaxed">"Fame on social media can be surprisingly ephemeral, fading as quickly as it appears."</p>
+        </div>
+
+        <!-- Mnemonic / Memory Hook -->
+        <div class="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-900/60">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1 flex items-center gap-1">
+            <span>🧠</span> Memory Hook (Mnemonic)
+          </div>
+          <p id="card-mnemonic" class="text-xs text-indigo-100 leading-relaxed">Think of an 'epic funeral' for an insect that lived for only one short day.</p>
+        </div>
+
+        <!-- Synonyms Pills -->
+        <div class="space-y-1.5">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Synonyms (Click to hear)</div>
+          <div id="card-synonyms" class="flex flex-wrap gap-1.5">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Guidance Guide Card -->
+      <div class="glass-panel rounded-2xl p-5 border border-slate-800 text-xs text-slate-400 space-y-2">
+        <div class="font-semibold text-slate-200 flex items-center gap-2">
+          <span>✨</span> How to test this Voice Agent Prototype
+        </div>
+        <ul class="space-y-1.5 list-disc list-inside text-slate-300">
+          <li><strong>Word Explorer:</strong> Lexi explains the word, then you speak a full sentence using it.</li>
+          <li><strong>Voice Quiz:</strong> Lexi speaks a clue; say the word aloud to earn XP!</li>
+          <li><strong>Roleplay Conversation:</strong> Converse naturally while weaving target vocabulary into dialogue.</li>
+          <li><strong>Pronunciation Lab:</strong> Say the word clearly to receive immediate acoustic similarity scores.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <!-- Settings Modal Dialog -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-fadeIn">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Voice & Agent Settings
+        </h3>
+        <button id="close-settings-btn" class="text-slate-400 hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        
+        <!-- Voice Selection -->
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Synthesizer Voice</label>
+          <select id="voice-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <!-- Speech Rate Slider -->
+        <div>
+          <div class="flex justify-between font-semibold text-slate-300 mb-1">
+            <span>Speech Speed</span>
+            <span id="speech-rate-val" class="text-indigo-400 font-mono">0.95x</span>
+          </div>
+          <input type="range" id="speech-rate-range" min="0.6" max="1.4" step="0.05" value="0.95" class="w-full accent-indigo-500" />
+        </div>
+
+        <!-- Speech Pitch Slider -->
+        <div>
+          <div class="flex justify-between font-semibold text-slate-300 mb-1">
+            <span>Speech Pitch</span>
+            <span id="speech-pitch-val" class="text-indigo-400 font-mono">1.00</span>
+          </div>
+          <input type="range" id="speech-pitch-range" min="0.7" max="1.3" step="0.05" value="1.0" class="w-full accent-indigo-500" />
+        </div>
+
+        <!-- Hands-free Continuous Conversation Mode -->
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-slate-700/60">
+          <div>
+            <div class="font-semibold text-slate-200">Hands-Free Conversation</div>
+            <div class="text-[11px] text-slate-400">Microphone automatically listens when Lexi finishes speaking</div>
+          </div>
+          <input type="checkbox" id="hands-free-toggle" class="w-4 h-4 accent-indigo-600 rounded" />
+        </div>
+
+        <!-- AI Engine Mode -->
+        <div class="space-y-2 pt-2 border-t border-slate-800">
+          <label class="block font-semibold text-slate-300">Agent Intelligence Engine</label>
+          <select id="engine-mode-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100">
+            <option value="lexi">Lexi Built-in Smart Engine (Fast, 0 Setup, Free)</option>
+            <option value="gemini">Google Gemini LLM (Connect your own API Key)</option>
+          </select>
+
+          <!-- Gemini Key Container -->
+          <div id="gemini-key-container" class="hidden pt-2">
+            <label class="block font-semibold text-slate-400 mb-1">Google Gemini API Key</label>
+            <input type="password" id="gemini-api-key" placeholder="AIzaSy..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 placeholder-slate-600" />
+            <p class="text-[10px] text-slate-500 mt-1">Key is stored only in your local browser localStorage.</p>
+          </div>
+        </div>
+
+        <!-- Danger Zone / Reset -->
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+          <button id="reset-stats-btn" class="text-rose-400 hover:text-rose-300 text-[11px] font-medium transition">
+            Reset Progress & Streaks
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button id="save-settings-btn" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition">
+          Apply & Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/60 bg-slate-950 py-4 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>LexiVoice AI Vocabulary Voice Agent Prototype</div>
+      <div class="flex items-center gap-4">
+        <span>Web Speech API + Canvas Visualizer</span>
+        <span>•</span>
+        <a href="https://github.com/Abhi82940/vocab-voice-agent" target="_blank" class="hover:text-indigo-400 transition underline underline-offset-2">GitHub Repository</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
